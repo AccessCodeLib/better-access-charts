@@ -21,7 +21,7 @@ Public Function NewCodeModuleSupport() As CodeModuleSupport
     
 End Function
 
-Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, Optional ByVal Chart As BAC_Chart = Nothing) As Form
+Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, Optional ByVal ChartProperties As BAC_Properties = Nothing) As Form
 
     Dim ConfigFrm As Form
     Set ConfigFrm = New Form_frm_Configuration
@@ -35,8 +35,8 @@ Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, O
     
     ConfigFrm.Init ReturnProperties
 
-    If Not (Chart Is Nothing) Then
-        ConfigFrm.LoadConfig Chart.Properties
+    If Not (ChartProperties Is Nothing) Then
+        ConfigFrm.LoadConfig ChartProperties
     End If
     
     ConfigFrm.Visible = True
@@ -44,3 +44,7 @@ Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, O
     Set NewConfigurationForm = ConfigFrm
         
 End Function
+
+Public Property Get ChartConfiguration() As BacChartConfigurationTools
+    Set ChartConfiguration = New BacChartConfigurationTools
+End Property

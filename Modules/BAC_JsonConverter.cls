@@ -79,14 +79,14 @@ Private Function ConvertString2Property(ByVal JsonString As String) As BAC_Prope
 '   "Name" : 123   => Value
 '   "Name" : { ... => Properties
 
-    Dim prop As BAC_Property
+    Dim Prop As BAC_Property
     
     Dim PropName As String
     Dim PropValueString As Variant
     
     Dim CutPos As Long
     
-    Set prop = New BAC_Property
+    Set Prop = New BAC_Property
     
     CutPos = InStr(1, JsonString, ":")
     
@@ -94,22 +94,24 @@ Private Function ConvertString2Property(ByVal JsonString As String) As BAC_Prope
     If Left(PropName, 1) = """" And Right(PropName, 1) = """" Then
         PropName = Mid(PropName, 2, Len(PropName) - 2)
     End If
-    prop.Name = PropName
+    Prop.Name = PropName
     
     PropValueString = Trim(Mid(JsonString, CutPos + 1))
     If Left(PropValueString, 1) = "{" Then ' new properties
-        Set prop.Properties = ParseProperties(PropValueString)
+        Set Prop.Properties = ParseProperties(PropValueString)
+    ElseIf PropValueString = "null" Then
+        Prop.Value = Null
     ElseIf PropValueString = "true" Then
-        prop.Value = True
+        Prop.Value = True
     ElseIf PropValueString = "false" Then
-        prop.Value = False
+        Prop.Value = False
     ElseIf Left(PropValueString, 1) = """" Then 'string
-        prop.Value = Mid(PropValueString, 2, Len(PropValueString) - 2)
+        Prop.Value = Mid(PropValueString, 2, Len(PropValueString) - 2)
     Else ' numeric (other data types not used in BAC)
-        prop.Value = Val(PropValueString)
+        Prop.Value = Val(PropValueString)
     End If
     
-    Set ConvertString2Property = prop
+    Set ConvertString2Property = Prop
     
 End Function
 
@@ -160,7 +162,7 @@ End Function
 '
 Private Function ConvertProperties(ByVal Properties As BAC_Properties, Optional ByVal PropLevel As Long = 0) As String
 
-    Dim prop As Property
+    Dim Prop As Property
     Dim i As Long
     Dim PropCnt As Long
     
@@ -215,6 +217,8 @@ Private Function ConvertValue(ByVal Value As Variant) As String
             End If
         Case VbVarType.vbString
             ValueString = """" & Value & """"
+        Case VbVarType.vbNull
+            ValueString = "null"
         Case Else
             ValueString = Trim(str(Value))
     End Select
