@@ -129,7 +129,6 @@ Private Function SetSplitMarker(ByVal JsonString As String) As String
             Mid(JsonString, Pos + 1, 1) = "|"
         End If
         Pos = InStr(Pos + 1, JsonString, ",")
-        Debug.Print JsonString, Pos
     Loop
     
     SetSplitMarker = Replace(JsonString, ", ", ",")
@@ -141,8 +140,6 @@ Private Function PosIsInSubObject(ByVal StringToCheck As String) As Boolean
     Dim CntOpeningBrackets As Long
     Dim CntClosingBrackets As Long
     
-'Debug.Print StringToCheck,
-    
     CntOpeningBrackets = Len(StringToCheck) - Len(Replace(StringToCheck, "{", vbNullString))
     CntClosingBrackets = Len(StringToCheck) - Len(Replace(StringToCheck, "}", vbNullString))
     
@@ -152,8 +149,6 @@ Private Function PosIsInSubObject(ByVal StringToCheck As String) As Boolean
         PosIsInSubObject = False
     End If
     
-'Debug.Print PosIsInSubObject
-
 End Function
 
 
