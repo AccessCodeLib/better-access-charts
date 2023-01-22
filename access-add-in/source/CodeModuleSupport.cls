@@ -19,7 +19,7 @@ Private Const ErrNumber91_ObjectVariableOrWithBlockVariableNotSet As Long = 91
 
 Private Const BAC_EarlyBindingConstName As String = "BAC_EarlyBinding"
 Private Const ConditionalCompilationArgumentsOptionName As String = "Conditional Compilation Arguments"
-Private Const BetterAccessChartsReferenceName As String = "BetterAccessCharts"
+Private Const BetterAccessChartsReferenceName As String = "BetterAccessChartsLib"
 
 #Const EarlyBinding = 0
 #Const DEBUGMODE = 0
@@ -195,11 +195,11 @@ On Error GoTo Fehler
     Dim vbp As Object
 #End If
     
-    If CodeModuleExists(BAC_FactoryModuleName) Then
+    If CodeModuleExists(ModuleName) Then
         Set vbc = CurrentVbProject.VBComponents(ModuleName)
     Else 'Modul anlegen und benennen
         Set vbc = CurrentVbProject.VBComponents.Add(vbext_ct_StdModule)
-        vbc.Name = BAC_FactoryModuleName
+        vbc.Name = ModuleName
     End If
 
    'Code einfügen
@@ -302,13 +302,19 @@ Private Function GetBetterAccessChartsFactoryModuleString() As String
 
     Dim str As String
     
-    str = "Option Compare Database" & vbNewLine & _
-         "Option Explicit" & vbNewLine & _
-         "" & vbNewLine & _
-         "Private m_Bac As Object" & vbNewLine & _
-         "" & vbNewLine & _
-         "#If BAC_EarlyBinding Then" & vbNewLine & _
-         "#Else" & vbNewLine
+    str = "'---------------------------------------------------------------------------------------" & vbNewLine & _
+"'<codelib>" & vbNewLine & _
+"'  <file>%AppFolder%/source/BetterAccessChartsFactory.bas</file>" & vbNewLine & _
+"'</codelib>" & vbNewLine & _
+"'---------------------------------------------------------------------------------------" & vbNewLine & _
+"Option Compare Database" & vbNewLine & _
+"Option Explicit" & vbNewLine & _
+"" & vbNewLine & _
+"Private m_BAC As Object" & vbNewLine & _
+"Private m_BACx As Object" & vbNewLine & _
+"" & vbNewLine & _
+"#If BAC_EarlyBinding Then" & vbNewLine & _
+"#Else" & vbNewLine
          
    str = str & vbNewLine & _
 "Public Enum chChartType" & vbNewLine & _
@@ -412,16 +418,29 @@ Private Function GetBetterAccessChartsFactoryModuleString() As String
    str = str & vbNewLine & _
 "' Factory" & vbNewLine & _
 "#If BAC_EarlyBinding Then" & vbNewLine & _
-"Public Function BAC() As BAC__Factory" & vbNewLine & _
+"Public Function BAC() As " & BetterAccessChartsReferenceName & ".BAC__Factory" & vbNewLine & _
 "#Else" & vbNewLine & _
 "Public Function BAC() As Object" & vbNewLine & _
 "#End If" & vbNewLine & _
 "    If m_Bac Is Nothing Then" & vbNewLine & _
-"        Set m_Bac = BetterAccessChartsLoader.GetBetterAccessChartsFactory" & vbNewLine & _
+"        Set m_BAC = BACx.BAC" & vbNewLine & _
 "    End If" & vbNewLine & _
 "    Set BAC = m_Bac" & vbNewLine & _
 "End Function" & vbNewLine
        
+       
+   str = str & vbNewLine & _
+"#If BAC_EarlyBinding Then" & vbNewLine & _
+"Public Function BACx() As " & BetterAccessChartsReferenceName & ".BacAddInTools" & vbNewLine & _
+"#Else" & vbNewLine & _
+"Public Function BACx() As Object" & vbNewLine & _
+"#End If" & vbNewLine & _
+"    If m_BACx Is Nothing Then" & vbNewLine & _
+"        Set m_BACx = BetterAccessChartsLoader.GetBetterAccessChartsAddInTools" & vbNewLine & _
+"    End If" & vbNewLine & _
+"    Set BACx = m_BACx" & vbNewLine & _
+"End Function" & vbNewLine
+
     GetBetterAccessChartsFactoryModuleString = str
 
 End Function
@@ -430,7 +449,11 @@ Private Function GetBetterAccessChartsLoaderModuleString() As String
 
    Dim str As String
    
-str = _
+    str = "'---------------------------------------------------------------------------------------" & vbNewLine & _
+"'<codelib>" & vbNewLine & _
+"'  <file>%AppFolder%/source/BetterAccessChartsLoader.bas</file>" & vbNewLine & _
+"'</codelib>" & vbNewLine & _
+"'---------------------------------------------------------------------------------------" & vbNewLine & _
 "Option Compare Database" & vbNewLine & _
 "Option Explicit" & vbNewLine & _
 "" & vbNewLine & _
@@ -439,8 +462,8 @@ str = _
 "' BAC_EarlyBinding = 0 ... CheckBetterAccessChartsReference removes reference (BAC created by add-in)" & vbNewLine & _
 "" & vbNewLine & _
 "Private Const BetterAccessChartsFileName As String = ""BetterAccessCharts""" & vbNewLine & _
-"Private Const BetterAccessChartsReferenceName As String = ""BetterAccessCharts""" & vbNewLine & _
-"Private Const BetterAccessChartsFactory As String = ""BAC""" & vbNewLine
+"Private Const BetterAccessChartsReferenceName As String = ""BetterAccessChartsLib""" & vbNewLine & _
+"Private Const BetterAccessChartsAddInToolsName As String = ""BetterAccessChartsAddInTools""" & vbNewLine
 
    str = str & vbNewLine & _
 "Public Sub CheckBetterAccessChartsReference()" & vbNewLine & _
@@ -448,20 +471,26 @@ str = _
 "End Sub" & vbNewLine
 
    str = str & vbNewLine & _
-"Public Function GetBetterAccessChartsFactory() As Object" & vbNewLine & _
+"Public Function GetBetterAccessChartsAddInTools() As Object" & vbNewLine & _
 "   CheckReference" & vbNewLine & _
 "#If BAC_EarlyBinding Then" & vbNewLine & _
-"    Set GetBetterAccessChartsFactory = BetterAccessCharts.BetterAccessCharts" & vbNewLine & _
+"    Set GetBetterAccessChartsAddInTools = " & BetterAccessChartsReferenceName & ".BetterAccessChartsAddInTools" & vbNewLine & _
 "#Else" & vbNewLine & _
-"    Set GetBetterAccessChartsFactory = Application.Run(GetAddInLocation & BetterAccessChartsFileName & ""."" & BetterAccessChartsFactory)" & vbNewLine & _
+"    Set GetBetterAccessChartsAddInTools = Application.Run(GetAddInLocation & BetterAccessChartsFileName & ""."" & BetterAccessChartsAddInToolsName)" & vbNewLine & _
 "#End If" & vbNewLine & _
 "End Function" & vbNewLine
 
    str = str & vbNewLine & _
 "Private Function GetAddInLocation() As String" & vbNewLine & _
-"   GetAddInLocation = GetAppDataLocation & ""\Microsoft\AddIns\""" & vbNewLine & _
-"   'GetAddInLocation = CodeProject.Path & ""\""" & vbNewLine & _
-"   ' ... welcher Speicherort ist besser?" & vbNewLine & _
+"   Dim strLocation As String" & vbNewLine & _
+"   strLocation = GetAppDataLocation & ""\Microsoft\AddIns\""" & vbNewLine & _
+"   If Len(VBA.Dir(strLocation & BetterAccessChartsFileName & "".accda"")) = 0 Then" & vbNewLine & _
+"      strLocation = CodeProject.Path & ""\""" & vbNewLine & _
+"      If Len(VBA.Dir(strLocation & BetterAccessChartsFileName & "".accda"")) = 0 Then" & vbNewLine & _
+"         Err.Raise vbObjectError, ""BetterAccessChartsLoader.GetAddInLocation"", ""Add-In file is missing""" & vbNewLine & _
+"      End If" & vbNewLine & _
+"   End If" & vbNewLine & _
+"   GetAddInLocation = strLocation" & vbNewLine & _
 "End Function" & vbNewLine
 
    str = str & vbNewLine & _
@@ -498,9 +527,23 @@ str = _
 
    str = str & vbNewLine & _
 "Private Sub AddReference()" & vbNewLine & _
-"   RemoveReference" & vbNewLine & _
-"   Application.References.AddFromFile GetAddInLocation & BetterAccessChartsFileName & "".accda""" & vbNewLine & _
+"   If Not ReferenceExits() Then" & vbNewLine & _
+"    Application.References.AddFromFile GetAddInLocation & BetterAccessChartsFileName & "".accda""" & vbNewLine & _
+"   End If" & vbNewLine & _
 "End Sub" & vbNewLine
+
+   str = str & vbNewLine & _
+"Private Function ReferenceExits() As Boolean" & vbNewLine & _
+"   Dim ref As Reference" & vbNewLine & _
+"   Dim BacRef As Reference" & vbNewLine & _
+"   For Each ref In Application.References" & vbNewLine & _
+"      If ref.Name = BetterAccessChartsReferenceName Then" & vbNewLine & _
+"         ReferenceExits = True" & vbNewLine & _
+"         Exit Function" & vbNewLine & _
+"      End If" & vbNewLine & _
+"   Next" & vbNewLine & _
+"   ReferenceExits = False" & vbNewLine & _
+"End Function" & vbNewLine
 
    str = str & vbNewLine & _
 "Private Sub RemoveReference()" & vbNewLine & _

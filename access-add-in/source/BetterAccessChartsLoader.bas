@@ -12,27 +12,17 @@ Option Explicit
 ' BAC_EarlyBinding = 0 ... CheckBetterAccessChartsReference removes reference (BAC created by add-in)
 
 Private Const BetterAccessChartsFileName As String = "BetterAccessCharts"
-Private Const BetterAccessChartsReferenceName As String = "BetterAccessCharts"
-Private Const BetterAccessChartsFactory As String = "BAC"
-Private Const BetterAccessChartsAddInTools As String = "BACx"
+Private Const BetterAccessChartsReferenceName As String = "BetterAccessChartsLib"
+Private Const BetterAccessChartsAddInTools As String = "BetterAccessChartsAddInTools"
 
 Public Sub CheckBetterAccessChartsReference()
    CheckReference
 End Sub
 
-Public Function GetBetterAccessChartsFactory() As Object
-   CheckReference
-#If BAC_EarlyBinding Then
-    Set GetBetterAccessChartsFactory = BetterAccessCharts.BetterAccessCharts
-#Else
-    Set GetBetterAccessChartsFactory = Application.Run(GetAddInLocation & BetterAccessChartsFileName & "." & BetterAccessChartsFactory)
-#End If
-End Function
-
 Public Function GetBetterAccessChartsAddInTools() As Object
    CheckReference
 #If BAC_EarlyBinding Then
-    Set GetBetterAccessChartsAddInTools = BetterAccessCharts.BetterAccessCharts
+    Set GetBetterAccessChartsAddInTools = BetterAccessChartsLib.BetterAccessChartsAddInTools
 #Else
     Set GetBetterAccessChartsAddInTools = Application.Run(GetAddInLocation & BetterAccessChartsFileName & "." & BetterAccessChartsAddInTools)
 #End If
