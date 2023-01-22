@@ -99,23 +99,22 @@ Public Enum chEasing
     easeOutBounce = 29
     easeInOutBounce = 30
 End Enum
-   
-#End If
 
+#End If
 ' Factory
 #If BAC_EarlyBinding Then
-Public Function BAC() As BetterAccessChartsLoader.BAC__Factory
+Public Function BAC() As BetterAccessChartsLib.BAC__Factory
 #Else
 Public Function BAC() As Object
 #End If
     If m_BAC Is Nothing Then
-        Set m_BAC = BetterAccessChartsLoader.GetBetterAccessChartsFactory
+        Set m_BAC = BACx.BAC
     End If
     Set BAC = m_BAC
 End Function
 
 #If BAC_EarlyBinding Then
-Public Function BACx() As BetterAccessChartsLoader.BacAddInTools
+Public Function BACx() As BetterAccessChartsLib.BacAddInTools
 #Else
 Public Function BACx() As Object
 #End If

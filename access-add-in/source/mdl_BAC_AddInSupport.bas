@@ -36,11 +36,16 @@ Public Function AddInStartUp()
    DoCmd.OpenForm "frm_Startup"
 End Function
 
-Public Function BACx() As BacAddInTools
+
+Public Function BetterAccessChartsAddInTools() As BacAddInTools
     If m_AddInTools Is Nothing Then
         Set m_AddInTools = New BacAddInTools
     End If
-   Set BACx = m_AddInTools
+   Set BetterAccessChartsAddInTools = m_AddInTools
+End Function
+
+Public Function BACx() As BacAddInTools
+   Set BACx = BetterAccessChartsAddInTools
 End Function
 
 Public Function UncPath( _

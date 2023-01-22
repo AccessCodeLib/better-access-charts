@@ -15,6 +15,63 @@ Attribute VB_Exposed = True
 Option Compare Database
 Option Explicit
 
+Private m_ScriptPropertiesLoaded As Boolean
+
+Public Property Get BAC() As BAC__Factory
+
+    If Not m_ScriptPropertiesLoaded Then
+        DefineScripts DefaultScriptProperties
+        m_ScriptPropertiesLoaded = True
+    End If
+    
+    Set BAC = BetterAccessCharts
+    
+End Property
+
+Private Sub DefineScripts(ByVal ScriptProperties As BAC_Properties)
+
+    ' ## Scripts
+    'Define chart.js
+    With ScriptProperties.Item("ChartJS").Properties
+        BetterAccessCharts.Scripts.ChartJS.Source = .Item("Source").Value
+        BetterAccessCharts.Scripts.ChartJS.CDN = .Item("CDN").Value
+        BetterAccessCharts.Scripts.ChartJS.PathFilename = .Item("PathFilename").Value
+    End With
+    
+    'Define color scheme plug-in
+    With ScriptProperties.Item("Plugin_ColorSchemes").Properties
+        BetterAccessCharts.Scripts.Plugin_ColorSchemes.Source = .Item("Source").Value
+        BetterAccessCharts.Scripts.Plugin_ColorSchemes.CDN = .Item("CDN").Value
+        BetterAccessCharts.Scripts.Plugin_ColorSchemes.PathFilename = .Item("PathFilename").Value
+    End With
+    
+    'Define data label plug in
+    With ScriptProperties.Item("Plugin_DataLabels").Properties
+        BetterAccessCharts.Scripts.Plugin_DataLabels.Source = .Item("Source").Value
+        BetterAccessCharts.Scripts.Plugin_DataLabels.CDN = .Item("CDN").Value
+        BetterAccessCharts.Scripts.Plugin_DataLabels.PathFilename = .Item("PathFilename").Value
+    End With
+    
+End Sub
+
+Private Property Get DefaultScriptProperties() As BAC_Properties
+    
+    Const ScriptPropertiesName As String = "DefaultScriptProperties"
+
+    Dim ScriptProperties As BAC_Properties
+    
+    Set ScriptProperties = Me.ChartConfiguration.GetFromTable(ScriptPropertiesName)
+    
+    If ScriptProperties Is Nothing Then
+        With New Form_frm_Configuration
+            Set ScriptProperties = .ScriptProperties
+        End With
+    End If
+    
+    Set DefaultScriptProperties = ScriptProperties
+    
+End Property
+
 Public Function NewCodeModuleSupport() As CodeModuleSupport
     
     Set NewCodeModuleSupport = New CodeModuleSupport
