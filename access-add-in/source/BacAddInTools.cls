@@ -60,7 +60,7 @@ Private Property Get DefaultScriptProperties() As BAC_Properties
 
     Dim ScriptProperties As BAC_Properties
     
-    Set ScriptProperties = Me.ChartConfiguration.GetFromTable(ScriptPropertiesName)
+    Set ScriptProperties = Me.AddInChartConfiguration.GetFromTable(ScriptPropertiesName)
     
     If ScriptProperties Is Nothing Then
         With New Form_frm_Configuration
@@ -104,4 +104,9 @@ End Function
 
 Public Property Get ChartConfiguration() As BacChartConfigurationTools
     Set ChartConfiguration = New BacChartConfigurationTools
+End Property
+
+Friend Property Get AddInChartConfiguration() As BacChartConfigurationTools
+    Set AddInChartConfiguration = New BacChartConfigurationTools
+    AddInChartConfiguration.InitTable UseAddInDatabase:=True
 End Property

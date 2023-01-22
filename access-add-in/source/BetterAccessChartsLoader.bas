@@ -8,12 +8,12 @@ Option Compare Database
 Option Explicit
 
 ' Set BAC_EarlyBinding in project property for compiler arguments
-' BAC_EarlyBinding = 1 ... CheckBetterAccessChartsReference add reference to accda (BAC created by accda-Reference)
+' BAC_EarlyBinding = 1 ... CheckBetterAccessChartsReference add reference to accda (BAC created by accda reference)
 ' BAC_EarlyBinding = 0 ... CheckBetterAccessChartsReference removes reference (BAC created by add-in)
 
 Private Const BetterAccessChartsFileName As String = "BetterAccessCharts"
 Private Const BetterAccessChartsReferenceName As String = "BetterAccessChartsLib"
-Private Const BetterAccessChartsAddInToolsName As String = "BetterAccessChartsAddInTools"
+Private Const BetterAccessChartsAddInTools As String = "BetterAccessChartsAddInTools"
 
 Public Sub CheckBetterAccessChartsReference()
    CheckReference
@@ -24,13 +24,15 @@ Public Function GetBetterAccessChartsAddInTools() As Object
 #If BAC_EarlyBinding Then
     Set GetBetterAccessChartsAddInTools = BetterAccessChartsLib.BetterAccessChartsAddInTools
 #Else
-    Set GetBetterAccessChartsAddInTools = Application.Run(GetAddInLocation & BetterAccessChartsFileName & "." & BetterAccessChartsAddInToolsName)
+    Set GetBetterAccessChartsAddInTools = Application.Run(GetAddInLocation & BetterAccessChartsFileName & "." & BetterAccessChartsAddInTools)
 #End If
 End Function
 
 Private Function GetAddInLocation() As String
    Dim strLocation As String
    strLocation = GetAppDataLocation & "\Microsoft\AddIns\"
+   'GetAddInLocation = CodeProject.Path & "\"
+   ' ... welcher Speicherort ist besser?
    If Len(VBA.Dir(strLocation & BetterAccessChartsFileName & ".accda")) = 0 Then
       strLocation = CodeProject.Path & "\"
       If Len(VBA.Dir(strLocation & BetterAccessChartsFileName & ".accda")) = 0 Then

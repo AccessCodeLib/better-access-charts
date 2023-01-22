@@ -99,8 +99,9 @@ Public Enum chEasing
     easeOutBounce = 29
     easeInOutBounce = 30
 End Enum
-
+   
 #End If
+
 ' Factory
 #If BAC_EarlyBinding Then
 Public Function BAC() As BetterAccessChartsLib.BAC__Factory

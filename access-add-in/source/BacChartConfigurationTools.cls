@@ -15,6 +15,33 @@ Attribute VB_Exposed = True
 Option Compare Database
 Option Explicit
 
+Private Const DefaultTableName As String = "USys_Properties"
+Private Const DefaultPropNameDataField As String = "PropName"
+Private Const DefaultJsonDataField As String = "JSON"
+Private Const DefaultUseAddInDatabase As Boolean = False
+
+Private m_TableName As String
+Private m_PropNameDataField As String
+Private m_JsonDataField As String
+Private m_UseAddInDatabase As Boolean
+
+Private Sub Class_Initialize()
+    InitTable DefaultTableName, DefaultPropNameDataField, DefaultJsonDataField, DefaultUseAddInDatabase
+End Sub
+
+Public Sub InitTable( _
+            Optional ByVal TableName As String = DefaultTableName, _
+            Optional ByVal PropNameDataField As String = DefaultPropNameDataField, _
+            Optional ByVal JsonDataField As String = DefaultJsonDataField, _
+            Optional ByVal UseAddInDatabase As Boolean = False)
+            
+    m_TableName = TableName
+    m_PropNameDataField = PropNameDataField
+    m_JsonDataField = JsonDataField
+    m_UseAddInDatabase = UseAddInDatabase
+    
+End Sub
+
 Public Sub DeleteFormProperty(ByVal FormName As String, ByVal PropertyName As String)
     
     Dim ao As AccessObject
@@ -94,7 +121,7 @@ Public Function GetFromTable(ByVal PropName As String) As BAC_Properties
     Dim JsonString As String
     Dim Properties As BAC_Properties
     
-    With CodeDb.OpenRecordset("select JSON from USys_Properties where PropName = '" & PropName & "'", dbOpenSnapshot)
+    With InstanceDb.OpenRecordset("select " & m_JsonDataField & " from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbOpenSnapshot)
         If Not .EOF Then
             JsonString = Nz(.Fields(0).Value, vbNullString)
         End If
@@ -121,7 +148,7 @@ Public Sub SaveToTable(ByVal PropName As String, ByVal Properties As BAC_Propert
         JsonString = .Properties2Json(Properties)
     End With
     
-    With CodeDb.OpenRecordset("select PropName, JSON from USys_Properties where PropName = '" & PropName & "'", dbOpenDynaset)
+    With InstanceDb.OpenRecordset("select " & m_PropNameDataField & ", " & m_JsonDataField & " from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbOpenDynaset)
         If .EOF Then
             .AddNew
             .Fields("PropName").Value = PropName
@@ -134,3 +161,13 @@ Public Sub SaveToTable(ByVal PropName As String, ByVal Properties As BAC_Propert
     End With
     
 End Sub
+
+Private Property Get InstanceDb() As DAO.Database
+
+    If m_UseAddInDatabase Then
+        Set InstanceDb = CodeDb
+    Else
+        Set InstanceDb = CurrentDb
+    End If
+
+End Property
