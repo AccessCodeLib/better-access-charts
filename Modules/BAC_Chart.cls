@@ -338,6 +338,7 @@ Private Sub Class_Initialize()
     Set m_Properties.NewProperty("ColorSchema").Properties = m_ColorSchema.Properties
     
     Set m_DataSource = New BAC_DataSource
+    Set m_Properties.NewProperty("DataSource").Properties = m_DataSource.Properties
     
     Set m_DataLabels = New BAC_DataLabels
     Set m_Properties.NewProperty("DataLabels").Properties = m_DataLabels.Properties
@@ -384,7 +385,6 @@ Private Sub Class_Initialize()
 End Sub
 
 Private Sub InitProperties()
-   m_Properties.NewProperty "DataSourceType"
    m_Properties.NewProperty "ChartType"
    m_Properties.NewProperty "StackedChart"
    m_Properties.NewProperty "AreaFilled"
