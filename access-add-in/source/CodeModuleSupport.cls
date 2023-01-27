@@ -217,6 +217,7 @@ On Error GoTo Fehler
     
     Call SaveModule
     
+    
 Ende_Cleanup:
     On Error Resume Next
     Set cm = Nothing
@@ -235,8 +236,8 @@ Fehler:
 End Sub
 
 Private Sub SaveModule()
-    DoCmd.Save acModule, BAC_FactoryModuleName
-    DoCmd.Close acModule, BAC_FactoryModuleName
+On Error Resume Next
+    Application.RunCommand acCmdCompileAndSaveAllModules
 End Sub
 
 Public Sub DeleteModuleFromApp()
@@ -595,6 +596,10 @@ Public Sub InsertFormCode( _
     cmw.AddCodeToEventProcedure "Timer", "Form", "    Me.TimerInterval = 0"
     
     cmw.AddCode GetBetterAccessChartFormCode(ChartControlName)
+    
+On Error Resume Next
+    Application.RunCommand acCmdCompileAndSaveAllModules
+    DoCmd.Save acForm, ChartFormName
 
 End Sub
 
@@ -690,7 +695,7 @@ Private Function GetBetterAccessChartFormCode(ByVal ChartControlName As String) 
 
     str = str & vbNewLine & _
 "Private Sub " & ChartControlName & "_DblClick(Cancel As Integer)" & vbNewLine & _
-"    If BACx.ChartShortcutMenu(Me.ctlWebbrowser) = 1 Then" & vbNewLine & _
+"    If BACx.ChartShortcutMenu(Me." & ChartControlName & ") = 1 Then" & vbNewLine & _
 "        ConfigurationForm.SetFocus" & vbNewLine & _
 "    End If" & vbNewLine & _
 "End Sub" & vbNewLine
