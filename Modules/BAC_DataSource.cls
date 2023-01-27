@@ -112,7 +112,7 @@ Public Property Let DataFieldNames(ByRef This_DataFieldNames As Variant)
         FieldNames = Split(This_DataFieldNames, ",")
     End If
     
-    m_Properties.Item("LabelFieldName").Value = FieldNames
+    m_Properties.Item("DataFieldNames").Value = FieldNames
     
 End Property
 Public Property Get DataFieldNames() As Variant

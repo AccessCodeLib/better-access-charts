@@ -78,7 +78,9 @@ Public Function NewCodeModuleSupport() As CodeModuleSupport
     
 End Function
 
-Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, Optional ByVal ChartProperties As BAC_Properties = Nothing) As Form
+Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, _
+                                     ByVal FormName As String, ByVal ChartControlName As String, _
+                            Optional ByVal ChartProperties As BAC_Properties = Nothing) As Form
 
     Dim ConfigFrm As Form
     Set ConfigFrm = New Form_frm_Configuration
@@ -88,6 +90,8 @@ Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, O
         ReturnProperties.NewProperty "Commit"
         ReturnProperties.NewProperty "ChartProperties"
         ReturnProperties.NewProperty "ScriptProperties"
+        ReturnProperties.NewProperty("FormName").Value = FormName
+        ReturnProperties.NewProperty("ChartControlName").Value = ChartControlName
     End If
     
     ConfigFrm.Init ReturnProperties
@@ -110,3 +114,14 @@ Friend Property Get AddInChartConfiguration() As BacChartConfigurationTools
     Set AddInChartConfiguration = New BacChartConfigurationTools
     AddInChartConfiguration.InitTable UseAddInDatabase:=True
 End Property
+
+Public Function ChartShortcutMenu(ByVal ChartControl As Control) As Long
+
+    With New WinApiShortcutMenu
+        Set .AccessForm = ChartControl.Parent.Form
+        Set .MenuControl = ChartControl
+        .AddMenuItem 1, "Open chart configuration"
+        ChartShortcutMenu = .OpenMenu()
+    End With
+
+End Function

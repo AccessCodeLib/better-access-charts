@@ -21,29 +21,32 @@ Private Const BAC_EarlyBindingConstName As String = "BAC_EarlyBinding"
 Private Const ConditionalCompilationArgumentsOptionName As String = "Conditional Compilation Arguments"
 Private Const BetterAccessChartsReferenceName As String = "BetterAccessChartsLib"
 
-#Const EarlyBinding = 0
+Private Const FormCodeMarker_Start As String = "'### BetterAccessCharts support - START"
+Private Const FormCodeMarker_End As String = "'### BetterAccessCharts support - END"
+
+#Const EARLYBINDING = 0
 #Const DEBUGMODE = 0
 
-#If EarlyBinding = 1 Then
+#If EARLYBINDING = 1 Then
 #Else
 
-   Public Enum vbext_ComponentType
-      vbext_ct_StdModule = 1
-      vbext_ct_ClassModule = 2
-      vbext_ct_MSForm = 3
-      vbext_ct_ActiveXDesigner = 11
-      vbext_ct_Document = 100
-   End Enum
+'   Public Enum vbext_ComponentType
+'      vbext_ct_StdModule = 1
+'      vbext_ct_ClassModule = 2
+'      vbext_ct_MSForm = 3
+'      vbext_ct_ActiveXDesigner = 11
+'      vbext_ct_Document = 100
+'   End Enum
    
 #End If
 
-#If EarlyBinding = 1 Then
+#If EARLYBINDING = 1 Then
 Private Property Get CurrentVbProject() As VBIDE.VBProject
 #Else
 Private Property Get CurrentVbProject() As Object
 #End If
 
-#If EarlyBinding = 1 Then
+#If EARLYBINDING = 1 Then
    Dim Proj As VBProject
    Dim Temp As VBProject
 #Else
@@ -69,7 +72,7 @@ Private Property Get CurrentVbProject() As Object
 
 End Property
 
-Public Property Get EarlyBinding() As Boolean
+Public Property Get EARLYBINDING() As Boolean
 
    Dim ConditionalCompilationArgumentsString As String
    Dim ConditionalCompilationArguments() As String
@@ -79,7 +82,7 @@ Public Property Get EarlyBinding() As Boolean
    ConditionalCompilationArgumentsString = Trim(Nz(Application.GetOption(ConditionalCompilationArgumentsOptionName), vbNullString))
    
    If Len(ConditionalCompilationArgumentsString) = 0 Then
-      EarlyBinding = False
+      EARLYBINDING = False
       Exit Property
    End If
    
@@ -87,14 +90,14 @@ Public Property Get EarlyBinding() As Boolean
    For i = LBound(ConditionalCompilationArguments) To UBound(ConditionalCompilationArguments)
       TestString = Replace(ConditionalCompilationArguments(i), " ", vbNullString)
       If TestString Like BAC_EarlyBindingConstName & "=*" Then
-         EarlyBinding = (TestString <> BAC_EarlyBindingConstName & "=0")
+         EARLYBINDING = (TestString <> BAC_EarlyBindingConstName & "=0")
          Exit For
       End If
    Next
    
 End Property
 
-Public Property Let EarlyBinding(ByVal UseEarlyBinding As Boolean)
+Public Property Let EARLYBINDING(ByVal UseEarlyBinding As Boolean)
 
    Dim ConditionalCompilationArgumentsString As String
    Dim ConditionalCompilationArguments() As String
@@ -185,7 +188,7 @@ Public Sub CreateModuleInApp(ByVal ModuleName As String, ByVal CodeString As Str
 
 On Error GoTo Fehler
 
-#If EarlyBinding = 1 Then
+#If EARLYBINDING = 1 Then
     Dim cm As CodeModule
     Dim vbc As VBComponent
     Dim vbp As VBProject
@@ -198,7 +201,7 @@ On Error GoTo Fehler
     If CodeModuleExists(ModuleName) Then
         Set vbc = CurrentVbProject.VBComponents(ModuleName)
     Else 'Modul anlegen und benennen
-        Set vbc = CurrentVbProject.VBComponents.Add(vbext_ct_StdModule)
+        Set vbc = CurrentVbProject.VBComponents.Add(vbext_ComponentType.vbext_ct_StdModule)
         vbc.Name = ModuleName
     End If
 
@@ -240,7 +243,7 @@ Public Sub DeleteModuleFromApp()
 
 On Error GoTo Fehler
 
-#If EarlyBinding = 1 Then
+#If EARLYBINDING = 1 Then
     Dim vbc As VBComponent
 #Else
     Dim vbc As Object
@@ -267,7 +270,7 @@ End Sub
 Public Function CodeModuleExists( _
                 ByVal CodeModulName As String) As Boolean
 
-#If EarlyBinding = 1 Then
+#If EARLYBINDING = 1 Then
    Dim VbcCol As VBIDE.VBComponents
    Dim vbc As VBIDE.VBComponent
 #Else
@@ -560,5 +563,153 @@ Private Function GetBetterAccessChartsLoaderModuleString() As String
 "End Sub" & vbNewLine
 
    GetBetterAccessChartsLoaderModuleString = str
+
+End Function
+
+
+Public Sub InsertFormCode( _
+                ByVal ChartFormName As String, _
+                ByVal ChartControlName As String _
+            )
+
+    
+    Dim cmw As CodeModuleWriter
+    Set cmw = New CodeModuleWriter
+    
+    DoCmd.OpenForm ChartFormName, acDesign
+    With Forms(ChartFormName)
+      If .HasModule = False Then
+         .HasModule = True
+      End If
+    End With
+    
+    cmw.Load "Form_" & ChartFormName
+    
+    CheckWebCtlControlSource Forms(ChartFormName).Controls(ChartControlName)
+    
+    RemoveBACFormCode cmw
+    
+    cmw.AddCodeToEventProcedure "Load", "Form", "    Me.TimerInterval = 2 ' load chart after form is completed"
+    cmw.AddCodeToEventProcedure "UnLoad", "Form", "    Set m_Configuration = Nothing"
+    cmw.AddCodeToEventProcedure "Timer", "Form", "    InitChart"
+    cmw.AddCodeToEventProcedure "Timer", "Form", "    Me.TimerInterval = 0"
+    
+    cmw.AddCode GetBetterAccessChartFormCode(ChartControlName)
+
+End Sub
+
+Private Sub CheckWebCtlControlSource(ByVal WebCtl As Control)
+   With WebCtl
+      If .ControlSource <> "=""about:blank""" Then
+         .ControlSource = "=""about:blank"""
+      End If
+   End With
+End Sub
+
+Private Sub RemoveBACFormCode(ByVal cmw As CodeModuleWriter)
+    
+#If EARLYBINDING = 1 Then
+    Dim cm As CodeModule
+#Else
+    Dim cm As Object
+#End If
+
+    Dim StartLine As Long
+    Dim EndLine As Long
+    
+    Dim StartMarkerLine As Long
+    Dim EndMarkerLine As Long
+    
+    Set cm = cmw.CodeModule
+    
+    cm.Find FormCodeMarker_Start, StartMarkerLine, 0, 0, 0, True
+    cm.Find FormCodeMarker_End, 0, 0, EndMarkerLine, 0, True
+    
+    If StartMarkerLine > 0 Then
+        cm.DeleteLines StartMarkerLine, EndMarkerLine - StartMarkerLine + 1
+    End If
+    
+End Sub
+
+Private Function GetBetterAccessChartFormCode(ByVal ChartControlName As String) As String
+
+    Dim str As String
+   
+    str = FormCodeMarker_Start & vbNewLine
+    
+    str = str & vbNewLine & _
+"#If BAC_EarlyBinding Then" & vbNewLine & _
+"    Private m_Chart As BAC_Chart" & vbNewLine & _
+"#Else" & vbNewLine & _
+"    Private m_Chart As Object" & vbNewLine & _
+"#End If" & vbNewLine
+    str = str & vbNewLine & _
+"Private WithEvents m_Configuration As Form" & vbNewLine & _
+"Private m_ConfigFormReturnProperties As Object" & vbNewLine
+    
+    str = str & vbNewLine & _
+"Private Sub InitChart()" & vbNewLine & _
+"" & vbNewLine & _
+"    Dim ChartProperties As Object" & vbNewLine & _
+"" & vbNewLine & _
+"    Set ChartProperties = BACx.ChartConfiguration.GetFormProperty(Me.Name, Me." & ChartControlName & ".Name & ""_BACproperties"")" & vbNewLine & _
+"    If Not (ChartProperties Is Nothing) Then" & vbNewLine & _
+"        CreateChart ChartProperties" & vbNewLine & _
+"    End If" & vbNewLine & _
+"" & vbNewLine & _
+"End Sub" & vbNewLine & _
+"" & vbNewLine & _
+"Private Sub CreateChart(ByVal ChartProperties As Object)" & vbNewLine & _
+"" & vbNewLine & _
+"    Set m_Chart = BAC.Chart(Me." & ChartControlName & ")" & vbNewLine & _
+"" & vbNewLine & _
+"    m_Chart.Properties.SetProperties ChartProperties" & vbNewLine & _
+"    m_Chart.DisplayIn = chDisplayIn.chWebBrowserControl" & vbNewLine & _
+"    m_Chart.CreateChart" & vbNewLine & _
+"" & vbNewLine & _
+"End Sub" & vbNewLine
+
+    str = str & vbNewLine & _
+"Private Property Get ConfigurationForm() As Form" & vbNewLine & _
+"" & vbNewLine & _
+"    Dim ChartProperties As Object" & vbNewLine & _
+"" & vbNewLine & _
+"    If m_Configuration Is Nothing Then" & vbNewLine & _
+"        If Not (m_Chart Is Nothing) Then" & vbNewLine & _
+"            Set ChartProperties = m_Chart.Properties" & vbNewLine & _
+"        Else" & vbNewLine & _
+"            Set ChartProperties = BACx.ChartConfiguration.GetFormProperty(Me.Name, Me." & ChartControlName & ".Name & ""_BACproperties"")" & vbNewLine & _
+"        End If" & vbNewLine & _
+"        Set m_Configuration = BACx.NewConfigurationForm(m_ConfigFormReturnProperties, Me.Name, Me." & ChartControlName & ".Name, ChartProperties)" & vbNewLine & _
+"        Me.SetFocus" & vbNewLine & _
+"    End If" & vbNewLine & _
+"" & vbNewLine & _
+"    Set ConfigurationForm = m_Configuration" & vbNewLine & _
+"" & vbNewLine & _
+"End Property" & vbNewLine
+
+    str = str & vbNewLine & _
+"Private Sub " & ChartControlName & "_DblClick(Cancel As Integer)" & vbNewLine & _
+"    If BACx.ChartShortcutMenu(Me.ctlWebbrowser) = 1 Then" & vbNewLine & _
+"        ConfigurationForm.SetFocus" & vbNewLine & _
+"    End If" & vbNewLine & _
+"End Sub" & vbNewLine
+
+    str = str & vbNewLine & _
+"Private Sub m_Configuration_Unload(Cancel As Integer)" & vbNewLine & _
+"    Set m_Configuration = Nothing" & vbNewLine & _
+"    If Not (m_ConfigFormReturnProperties Is Nothing) Then" & vbNewLine & _
+"        With m_ConfigFormReturnProperties" & vbNewLine & _
+"            If .Item(""Commit"").Value = True Then" & vbNewLine & _
+"                CreateChart .Item(""ChartProperties"").Properties" & vbNewLine & _
+"            End If" & vbNewLine & _
+"        End With" & vbNewLine & _
+"        Set m_ConfigFormReturnProperties = Nothing" & vbNewLine & _
+"    End If" & vbNewLine & _
+"End Sub" & vbNewLine
+
+    str = str & vbNewLine & FormCodeMarker_End & vbNewLine
+
+    GetBetterAccessChartFormCode = str
 
 End Function
