@@ -99,6 +99,8 @@ Private Function ConvertString2Property(ByVal JsonString As String) As BAC_Prope
     PropValueString = Trim(Mid(JsonString, CutPos + 1))
     If Left(PropValueString, 1) = "{" Then ' new properties
         Set Prop.Properties = ParseProperties(PropValueString)
+    ElseIf Left(PropValueString, 1) = "[" Then ' new properties
+        Prop.Value = ParseJsonArray(PropValueString)
     ElseIf PropValueString = "null" Then
         Prop.Value = Null
     ElseIf PropValueString = "true" Then
@@ -115,18 +117,61 @@ Private Function ConvertString2Property(ByVal JsonString As String) As BAC_Prope
     
 End Function
 
+Private Function ParseJsonArray(ByVal JsonString As String) As Variant()
+
+    Dim StrArray() As String
+    Dim ValueArray() As Variant
+    Dim i As Long
+    
+    If Left(JsonString, 1) = "[" And Right(JsonString, 1) = "]" Then
+        JsonString = Trim(Mid(JsonString, 2, Len(JsonString) - 2))
+    End If
+    
+    StrArray = Split(JsonString, ",")
+    ReDim ValueArray(UBound(StrArray))
+    
+    For i = LBound(StrArray) To UBound(StrArray)
+        ValueArray(i) = ParseValueFromString(StrArray(i))
+    Next
+    
+    ParseJsonArray = ValueArray
+
+End Function
+
+Private Function ParseValueFromString(ByVal JsonString As String) As Variant
+    
+    JsonString = Trim(JsonString)
+    
+    If JsonString = "null" Then
+        ParseValueFromString = Null
+    ElseIf JsonString = "true" Then
+        ParseValueFromString = True
+    ElseIf JsonString = "false" Then
+        ParseValueFromString = False
+    ElseIf Left(JsonString, 1) = """" And Right(JsonString, 1) = """" Then 'string
+        ParseValueFromString = Mid(JsonString, 2, Len(JsonString) - 2)
+    Else
+        ParseValueFromString = Val(JsonString)
+    End If
+    
+End Function
+
 Private Function SetSplitMarker(ByVal JsonString As String) As String
 
     Dim Pos As Long
     Dim LeftPart As String
+    Dim CheckString As String
     
     JsonString = Replace(JsonString, ",", ", ") ' place to insert marker
 
     Pos = InStr(1, JsonString, ",")
     
     Do While Pos > 0
-        If Not PosIsInSubObject(Left(JsonString, Pos - 1)) Then
-            Mid(JsonString, Pos + 1, 1) = "|"
+        CheckString = Left(JsonString, Pos - 1)
+        If Not PosIsInSubObject(CheckString) Then
+            If Not PosIsInArray(CheckString) Then
+                Mid(JsonString, Pos + 1, 1) = "|"
+            End If
         End If
         Pos = InStr(Pos + 1, JsonString, ",")
     Loop
@@ -137,19 +182,32 @@ End Function
 
 Private Function PosIsInSubObject(ByVal StringToCheck As String) As Boolean
 
+    PosIsInSubObject = PosIsInOpenStruct(StringToCheck, "{", "}")
+    
+End Function
+
+Private Function PosIsInArray(ByVal StringToCheck As String) As Boolean
+
+    PosIsInArray = PosIsInOpenStruct(StringToCheck, "[", "]")
+    
+End Function
+
+Private Function PosIsInOpenStruct(ByVal StringToCheck As String, ByVal OpeningChar As String, ByVal ClosingChar As String) As Boolean
+
     Dim CntOpeningBrackets As Long
     Dim CntClosingBrackets As Long
     
-    CntOpeningBrackets = Len(StringToCheck) - Len(Replace(StringToCheck, "{", vbNullString))
-    CntClosingBrackets = Len(StringToCheck) - Len(Replace(StringToCheck, "}", vbNullString))
+    CntOpeningBrackets = Len(StringToCheck) - Len(Replace(StringToCheck, OpeningChar, vbNullString))
+    CntClosingBrackets = Len(StringToCheck) - Len(Replace(StringToCheck, ClosingChar, vbNullString))
     
     If CntOpeningBrackets > CntClosingBrackets Then
-        PosIsInSubObject = True
+        PosIsInOpenStruct = True
     Else
-        PosIsInSubObject = False
+        PosIsInOpenStruct = False
     End If
     
 End Function
+
 
 
 '##################
@@ -202,6 +260,11 @@ End Function
 Private Function ConvertValue(ByVal Value As Variant) As String
 
     Dim ValueString As String
+    
+    If IsArray(Value) Then
+        ConvertValue = ConvertArray(Value)
+        Exit Function
+    End If
 
     Select Case VarType(Value)
         Case VbVarType.vbBoolean
@@ -220,4 +283,19 @@ Private Function ConvertValue(ByVal Value As Variant) As String
     
     ConvertValue = ValueString
 
+End Function
+
+Private Function ConvertArray(ByVal ValueArray As Variant) As String
+
+    Dim JsonStringArray() As String
+    Dim i As Long
+    
+    ReDim JsonStringArray(UBound(ValueArray))
+    
+    For i = LBound(ValueArray) To UBound(ValueArray)
+        JsonStringArray(i) = ConvertValue(ValueArray(i))
+    Next
+
+    ConvertArray = "[" & Join(JsonStringArray, ",") & "]"
+    
 End Function

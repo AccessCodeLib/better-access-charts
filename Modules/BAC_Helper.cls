@@ -35,30 +35,30 @@ Option Explicit
 
 #If VBA7 Then
     Private Declare PtrSafe Function ShellExecuteA Lib "Shell32" _
-        (ByVal hWnd As LongPtr, ByVal lpOperation As String, _
+        (ByVal Hwnd As LongPtr, ByVal lpOperation As String, _
          ByVal lpFile As String, ByVal lpParameters As String, _
          ByVal lpDirectory As String, ByVal nShowCmd As eShowCmd) As Long
 #Else
     Private Declare Function ShellExecuteA Lib "Shell32" _
-        (ByVal hWnd As Long, ByVal lpOperation As String, _
+        (ByVal Hwnd As Long, ByVal lpOperation As String, _
          ByVal lpFile As String, ByVal lpParameters As String, _
          ByVal lpDirectory As String, ByVal nShowCmd As eShowCmd) As Long
 #End If
 
 #If VBA7 And Win64 Then
     Private Declare PtrSafe Function GetDC Lib "user32" _
-        (ByVal hWnd As LongPtr) As LongPtr
+        (ByVal Hwnd As LongPtr) As LongPtr
     Private Declare PtrSafe Function ReleaseDC Lib "user32" ( _
-        ByVal hWnd As LongPtr, _
+        ByVal Hwnd As LongPtr, _
         ByVal hDC As LongPtr) As LongPtr
     Private Declare PtrSafe Function GetDeviceCaps Lib "gdi32" ( _
         ByVal hDC As LongPtr, _
         ByVal nIndex As Long) As LongPtr
 #Else
     Private Declare Function GetDC Lib "user32" ( _
-        ByVal hWnd As Long) As Long
+        ByVal Hwnd As Long) As Long
     Private Declare Function ReleaseDC Lib "user32" ( _
-        ByVal hWnd As Long, _
+        ByVal Hwnd As Long, _
         ByVal hDC As Long) As Long
    Private Declare Function GetDeviceCaps Lib "gdi32" ( _
         ByVal hDC As Long, _

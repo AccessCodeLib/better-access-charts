@@ -18,36 +18,62 @@ Option Explicit
 
 
 '### Members
-
-Private m_Type As chDataSourceType
-Private m_ObjectName As String
-Private m_SQLStatement As String
 Private m_Recordset As DAO.Recordset
-Private m_LabelFieldName As String
-Private m_DataFieldNames() As String
 Private m_Data As BAC_Data
 
+Private m_Properties As BAC_Properties
+
+Private Sub Class_Initialize()
+   InitProperties
+End Sub
+
+Private Sub InitProperties()
+   Set m_Properties = New BAC_Properties
+   m_Properties.NewProperty "DataSourceType"
+   m_Properties.NewProperty "DataSourceText"
+   m_Properties.NewProperty "LabelFieldName"
+   m_Properties.NewProperty "DataFieldNames"
+End Sub
 
 ' ### Properties
 
+Public Property Get Properties() As BAC_Properties
+   Set Properties = m_Properties
+End Property
+
+Private Property Get DataSourceType() As String
+    DataSourceType = Nz(m_Properties.Item("DataSourceType").Value, vbNullString)
+End Property
+Private Property Let DataSourceType(ByVal NewValue As String)
+    m_Properties.Item("DataSourceType").Value = NewValue
+End Property
+
+Public Property Get DataSourceText() As String
+Attribute DataSourceText.VB_UserMemId = 0
+    DataSourceText = Nz(m_Properties.Item("DataSourceText").Value, vbNullString)
+End Property
+Public Property Let DataSourceText(ByVal NewValue As String)
+    m_Properties.Item("DataSourceText").Value = NewValue
+End Property
+
 Public Property Let ObjectName(ByVal This_ObjectName As String)
-    m_Type = dstTableName
-    m_ObjectName = This_ObjectName
+    DataSourceType = dstTableName
+    DataSourceText = This_ObjectName
 End Property
 Public Property Get ObjectName() As String
-    ObjectName = m_ObjectName
+    ObjectName = DataSourceText
 End Property
 
 Public Property Let SQLStatement(ByVal This_SQLStatement As String)
-    m_Type = dstSQLStament
-    m_SQLStatement = This_SQLStatement
+    DataSourceType = dstSQLStament
+    DataSourceText = This_SQLStatement
 End Property
 Public Property Get SQLStatement() As String
-    SQLStatement = m_SQLStatement
+    SQLStatement = DataSourceText
 End Property
 
 Public Property Set Recordset(ByVal This_Recordset As Object)  ' ADODB/DAO.Recordset
-    m_Type = dstRecordset
+    DataSourceType = dstRecordset
     Set m_Recordset = This_Recordset
 End Property
 Public Property Get Recordset() As Object   ' ADODB/DAO.Recordset
@@ -55,38 +81,49 @@ Public Property Get Recordset() As Object   ' ADODB/DAO.Recordset
 End Property
 
 Public Property Set Data(ByVal This_Data As BAC_Data)
-    m_Type = dstData
+    DataSourceType = dstData
     Set m_Data = This_Data
 End Property
 Public Property Get Data() As BAC_Data
     Set Data = m_Data
 End Property
 
-
 Public Property Let LabelFieldName(ByVal This_LabelFieldName As String)
-    m_LabelFieldName = This_LabelFieldName
+    m_Properties.Item("LabelFieldName").Value = This_LabelFieldName
 End Property
 Public Property Get LabelFieldName() As String
-    LabelFieldName = m_LabelFieldName
+    LabelFieldName = Nz(m_Properties.Item("LabelFieldName").Value, vbNullString)
 End Property
 
 Public Property Let DataFieldNames(ByRef This_DataFieldNames As Variant)
+
     Dim i As Integer
+    Dim FieldNames As Variant
     
     If IsMissing(This_DataFieldNames) Then Exit Property
     
     If IsArray(This_DataFieldNames) = True Then
-        ReDim m_DataFieldNames(UBound(This_DataFieldNames))
+        ReDim FieldNames(UBound(This_DataFieldNames))
         For i = LBound(This_DataFieldNames) To UBound(This_DataFieldNames)
-            m_DataFieldNames(i) = This_DataFieldNames(i)
+            FieldNames(i) = This_DataFieldNames(i)
         Next
+    ElseIf IsNull(This_DataFieldNames) Then
+        FieldNames = Array()
     Else
-        m_DataFieldNames = Split(This_DataFieldNames, ",")
+        FieldNames = Split(This_DataFieldNames, ",")
     End If
+    
+    m_Properties.Item("DataFieldNames").Value = FieldNames
     
 End Property
 Public Property Get DataFieldNames() As Variant
-    DataFieldNames = m_DataFieldNames
+    Dim dfn As Variant
+    dfn = m_Properties.Item("DataFieldNames").Value
+    If IsArray(dfn) Then
+        DataFieldNames = dfn
+    Else
+        DataFieldNames = Array()
+    End If
 End Property
 
 
@@ -116,7 +153,7 @@ End Sub
 
 Public Sub UseDemoData()
 
-    m_Type = dstDemo
+    DataSourceType = dstDemo
     
 End Sub
 
@@ -134,7 +171,7 @@ On Error GoTo Handle_Error
     Set db = CurrentDb()
     
     'Detect data source
-    Select Case m_Type
+    Select Case DataSourceType
         Case dstTableName, dstQueryName:
             Set rst = db.OpenRecordset(ObjectName)
         Case dstSQLStament:

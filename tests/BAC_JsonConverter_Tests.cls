@@ -37,6 +37,13 @@ Const JsonStringWithSubObject As String = _
 "  }" & vbNewLine & _
 "}"
 
+Const ArrayJsonTestString As String = _
+"{" & vbNewLine & _
+"  ""NumProp"" : 123," & vbNewLine & _
+"  ""ArrayProp"" : [""a"",""b"",""c""]," & vbNewLine & _
+"  ""StrProp"" : ""abc""" & vbNewLine & _
+"}"
+
 
 '###############
 ' TESTS
@@ -71,6 +78,22 @@ Public Sub ParseJsonStringWithSubProperties()
     
 End Sub
 
+Public Sub ParseArrayJsonString()
+
+    Dim P As BAC_Properties
+    
+    With New BAC_JsonConverter
+        Set P = .Json2Properties(ArrayJsonTestString)
+    End With
+    
+    Assert.That P.Item("NumProp").Value, Iz.EqualTo(123)
+    Assert.That P.Item("ArrayProp").Value(0), Iz.EqualTo("a")
+    Assert.That P.Item("ArrayProp").Value(1), Iz.EqualTo("b")
+    Assert.That P.Item("ArrayProp").Value(2), Iz.EqualTo("c")
+    Assert.That P.Item("StrProp").Value, Iz.EqualTo("abc")
+    
+End Sub
+
 Public Sub TestCreateSimpleJsonString()
 
     Dim P As BAC_Properties
@@ -102,5 +125,19 @@ Public Sub TestCreateJsonStringWithSubObject()
     End With
     
     Assert.That JsonString, Iz.EqualTo(JsonStringWithSubObject)
+
+End Sub
+
+Public Sub TestCreateArrayJsonString()
+
+    Dim P As BAC_Properties
+    Dim JsonString As String
+    
+    With New BAC_JsonConverter
+        Set P = .Json2Properties(ArrayJsonTestString)
+        JsonString = .Properties2Json(P)
+    End With
+    
+    Assert.That JsonString, Iz.EqualTo(ArrayJsonTestString)
 
 End Sub

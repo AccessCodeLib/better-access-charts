@@ -27,6 +27,7 @@ Friend Property Let Name(ByVal NewValue As String)
 End Property
 
 Public Property Get Value() As Variant
+Attribute Value.VB_UserMemId = 0
    Value = m_Value
 End Property
 
