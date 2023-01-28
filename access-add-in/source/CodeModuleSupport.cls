@@ -695,9 +695,12 @@ Private Function GetBetterAccessChartFormCode(ByVal ChartControlName As String) 
 
     str = str & vbNewLine & _
 "Private Sub " & ChartControlName & "_DblClick(Cancel As Integer)" & vbNewLine & _
-"    If BACx.ChartShortcutMenu(Me." & ChartControlName & ") = 1 Then" & vbNewLine & _
-"        ConfigurationForm.SetFocus" & vbNewLine & _
-"    End If" & vbNewLine & _
+"    Select Case BACx.ChartShortcutMenu(Me." & ChartControlName & ")" & vbNewLine & _
+"        Case 1" & vbNewLine & _
+"            ConfigurationForm.SetFocus" & vbNewLine & _
+"        Case 2" & vbNewLine & _
+"            m_Chart.CreateChart" & vbNewLine & _
+"    End Select" & vbNewLine & _
 "End Sub" & vbNewLine
 
     str = str & vbNewLine & _

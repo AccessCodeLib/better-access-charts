@@ -29,6 +29,7 @@ Public Sub Append(ByVal Property As BAC_Property)
 End Sub
 
 Public Property Get Item(ByVal Index As Variant) As BAC_Property
+Attribute Item.VB_UserMemId = 0
    Set Item = m_Properties.Item(Index)
 End Property
 

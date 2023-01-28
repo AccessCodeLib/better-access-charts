@@ -121,6 +121,7 @@ Public Function ChartShortcutMenu(ByVal ChartControl As Control) As Long
         Set .AccessForm = ChartControl.Parent.Form
         Set .MenuControl = ChartControl
         .AddMenuItem 1, "Open chart configuration"
+        .AddMenuItem 2, "Refresh chart"
         ChartShortcutMenu = .OpenMenu()
     End With
 

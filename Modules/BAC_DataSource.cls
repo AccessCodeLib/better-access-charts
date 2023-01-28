@@ -30,7 +30,7 @@ End Sub
 Private Sub InitProperties()
    Set m_Properties = New BAC_Properties
    m_Properties.NewProperty "DataSourceType"
-   m_Properties.NewProperty "RowSource"
+   m_Properties.NewProperty "DataSourceText"
    m_Properties.NewProperty "LabelFieldName"
    m_Properties.NewProperty "DataFieldNames"
 End Sub
@@ -48,27 +48,28 @@ Private Property Let DataSourceType(ByVal NewValue As String)
     m_Properties.Item("DataSourceType").Value = NewValue
 End Property
 
-Public Property Get RowSource() As String
-    RowSource = Nz(m_Properties.Item("RowSource").Value, vbNullString)
+Public Property Get DataSourceText() As String
+Attribute DataSourceText.VB_UserMemId = 0
+    DataSourceText = Nz(m_Properties.Item("DataSourceText").Value, vbNullString)
 End Property
-Public Property Let RowSource(ByVal NewValue As String)
-    m_Properties.Item("RowSource").Value = NewValue
+Public Property Let DataSourceText(ByVal NewValue As String)
+    m_Properties.Item("DataSourceText").Value = NewValue
 End Property
 
 Public Property Let ObjectName(ByVal This_ObjectName As String)
     DataSourceType = dstTableName
-    RowSource = This_ObjectName
+    DataSourceText = This_ObjectName
 End Property
 Public Property Get ObjectName() As String
-    ObjectName = RowSource
+    ObjectName = DataSourceText
 End Property
 
 Public Property Let SQLStatement(ByVal This_SQLStatement As String)
     DataSourceType = dstSQLStament
-    RowSource = This_SQLStatement
+    DataSourceText = This_SQLStatement
 End Property
 Public Property Get SQLStatement() As String
-    SQLStatement = RowSource
+    SQLStatement = DataSourceText
 End Property
 
 Public Property Set Recordset(ByVal This_Recordset As Object)  ' ADODB/DAO.Recordset
