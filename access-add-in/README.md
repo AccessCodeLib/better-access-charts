@@ -1,5 +1,7 @@
 ## Access Add-In for Better-Access-Charts
 
+Add-in in action: https://access-codelib.net/videos/better-access-charts/create-chart-form.mp4
+
 ### Installation
 1. Copy files into any folder
    * BetterAccessCharts.accda (Add-in with BAC-Modules)
