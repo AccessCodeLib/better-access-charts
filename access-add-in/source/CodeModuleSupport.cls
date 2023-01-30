@@ -10,6 +10,7 @@ Attribute VB_Exposed = True
 '---------------------------------------------------------------------------------------
 '<codelib>
 '  <file>%AppFolder%/source/CodeModuleSupport.cls</file>
+'  <use>_codelib/addins/shared/VbeTools.cls</use>
 '</codelib>
 '---------------------------------------------------------------------------------------
 Option Compare Database
@@ -39,38 +40,6 @@ Private Const FormCodeMarker_End As String = "'### BetterAccessCharts support - 
 '   End Enum
    
 #End If
-
-#If EARLYBINDING = 1 Then
-Private Property Get CurrentVbProject() As VBIDE.VBProject
-#Else
-Private Property Get CurrentVbProject() As Object
-#End If
-
-#If EARLYBINDING = 1 Then
-   Dim Proj As VBProject
-   Dim Temp As VBProject
-#Else
-   Dim Proj As Object
-   Dim Temp As Object
-#End If
-   Dim strCurrentDbName As String
-
-   Set Proj = VBE.ActiveVBProject
-   'Prüfen, ob das richtige VbProject gewählt wurde (muss das von CurrentDb sein)
-   strCurrentDbName = UncPath(CurrentDb.Name)
-   If Proj.FileName <> strCurrentDbName Then
-      Set Proj = Nothing
-      For Each Temp In VBE.VBProjects
-         If Temp.FileName = strCurrentDbName Then
-            Set Proj = Temp
-            Exit For
-         End If
-      Next
-   End If
-   
-   Set CurrentVbProject = Proj
-
-End Property
 
 Public Property Get EARLYBINDING() As Boolean
 
@@ -198,10 +167,10 @@ On Error GoTo Fehler
     Dim vbp As Object
 #End If
     
-    If CodeModuleExists(ModuleName) Then
-        Set vbc = CurrentVbProject.VBComponents(ModuleName)
+    If VbeTools.CodeModuleExists(ModuleName) Then
+        Set vbc = VbeTools.CurrentVbProject.VBComponents(ModuleName)
     Else 'Modul anlegen und benennen
-        Set vbc = CurrentVbProject.VBComponents.Add(vbext_ComponentType.vbext_ct_StdModule)
+        Set vbc = VbeTools.CurrentVbProject.VBComponents.Add(vbext_ComponentType.vbext_ct_StdModule)
         vbc.Name = ModuleName
     End If
 
@@ -216,8 +185,7 @@ On Error GoTo Fehler
     Loop
     
     Call SaveModule
-    
-    
+     
 Ende_Cleanup:
     On Error Resume Next
     Set cm = Nothing
@@ -227,9 +195,9 @@ Ende_Cleanup:
 
 Fehler:
     If Err.Number = ErrNumber91_ObjectVariableOrWithBlockVariableNotSet Then
-        RaiseError ErrNumber91_ObjectVariableOrWithBlockVariableNotSet, "TransferCodeModule.CreateModuleInApp", Err.Source, "Keine Datenbank geöffnet!"
+        RaiseError ErrNumber91_ObjectVariableOrWithBlockVariableNotSet, "CodeModuleSupport.CreateModuleInApp", Err.Source, "Keine Datenbank geöffnet!"
     Else
-        RaiseError Err.Number, "TransferCodeModule.CreateModuleInApp", Err.Source, Err.Description
+        RaiseError Err.Number, "CodeModuleSupport.CreateModuleInApp", Err.Source, Err.Description
     End If
     Resume Ende_Cleanup
     
@@ -250,8 +218,10 @@ On Error GoTo Fehler
     Dim vbc As Object
 #End If
     
-    Set vbc = CurrentVbProject.VBComponents(BAC_FactoryModuleName)
-    CurrentVbProject.VBComponents.Remove vbc
+    With VbeTools.CurrentVbProject
+        Set vbc = .VBComponents(BAC_FactoryModuleName)
+        .VBComponents.Remove vbc
+    End With
     
 Ende_Cleanup:
     On Error Resume Next
@@ -260,34 +230,13 @@ Ende_Cleanup:
 
 Fehler:
     If Err.Number = ErrNumber91_ObjectVariableOrWithBlockVariableNotSet Then
-        RaiseError ErrNumber91_ObjectVariableOrWithBlockVariableNotSet, "TransferCodeModule.DeleteModuleFromApp", Err.Source, "Keine Datenbank geöffnet!"
+        RaiseError ErrNumber91_ObjectVariableOrWithBlockVariableNotSet, "CodeModuleSupport.DeleteModuleFromApp", Err.Source, "Keine Datenbank geöffnet!"
     Else
-        RaiseError Err.Number, "TransferCodeModule.DeleteModuleFromApp", Err.Source, Err.Description
+        RaiseError Err.Number, "CodeModuleSupport.DeleteModuleFromApp", Err.Source, Err.Description
     End If
     Resume Ende_Cleanup
 
 End Sub
-
-Public Function CodeModuleExists( _
-                ByVal CodeModulName As String) As Boolean
-
-#If EARLYBINDING = 1 Then
-   Dim VbcCol As VBIDE.VBComponents
-   Dim vbc As VBIDE.VBComponent
-#Else
-   Dim VbcCol As Object
-   Dim vbc As Object
-#End If
-   
-   Set VbcCol = CurrentVbProject.VBComponents
-   For Each vbc In VbcCol
-      If vbc.Name = CodeModulName Then
-         CodeModuleExists = True
-         Exit For
-      End If
-   Next
-   
-End Function
 
 Private Sub RaiseError( _
                     ByVal ErrNumber As Long, _
@@ -710,6 +659,7 @@ Private Function GetBetterAccessChartFormCode(ByVal ChartControlName As String) 
 "        With m_ConfigFormReturnProperties" & vbNewLine & _
 "            If .Item(""Commit"").Value = True Then" & vbNewLine & _
 "                CreateChart .Item(""ChartProperties"").Properties" & vbNewLine & _
+"                BACx.ChartConfiguration.SaveToFormProperty Me.Name, Me." & ChartControlName & ".Name & ""_BACproperties"", .Item(""ChartProperties"").Properties" & vbNewLine & _
 "            End If" & vbNewLine & _
 "        End With" & vbNewLine & _
 "        Set m_ConfigFormReturnProperties = Nothing" & vbNewLine & _
