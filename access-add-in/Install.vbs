@@ -4,27 +4,24 @@ const AddInName = "BetterAccessCharts"
 const AddInFileName = "BetterAccessCharts.accda"
 const MsgBoxTitle = "Install Better-Access-Charts"
 
-MsgBox "Vor dem Aktualisieren der Add-In-Datei darf das Add-In nicht geladen sein!" & chr(13) & _
-       "Zur Sicherheit alle Access-Instanzen schlieﬂen.", , MsgBoxTitle & ": Hinweis"
+MsgBox "Before updating the add-in file, the add-in must not be loaded!" & chr(13) & _
+       "For security, close all Access instances.", , MsgBoxTitle & ": Hint"
 
-Select Case MsgBox("Soll das Add-In als accde verwendet werden?" + chr(13) & _
-                   "(Add-In wird kompiliert ins Add-In-Verzeichnis kopiert.)", 3, MsgBoxTitle)
+Select Case MsgBox("Do you want to use the add-in as accde?" + chr(13) & _
+                   "(Add-in is copied compiled to the add-in directory.)", 3, MsgBoxTitle)
    case 6 ' vbYes
       CreateMde GetSourceFileFullName, GetDestFileFullName
-	  MsgBox "Add-In wurde kompilliert und in '" + GetAddInLocation + "' abgespeichert", , MsgBoxTitle
+	  MsgBox "Add-in has been composed and changed to '" + GetAddInLocation + "' Stored", , MsgBoxTitle
    case 7 ' vbNo
       FileCopy GetSourceFileFullName, GetDestFileFullName
-	  MsgBox "Add-In wurde in '" + GetAddInLocation + "' abgespeichert", , MsgBoxTitle
+	  MsgBox "Add-in was added to '" + GetAddInLocation + "' Stored", , MsgBoxTitle
    case else
       
 End Select
 
 
-
-
-
 '##################################################
-' Hilfsfunktionen:
+' Auxiliary functions:
 
 Function GetSourceFileFullName()
    GetSourceFileFullName = GetScriptLocation & AddInFileName 
