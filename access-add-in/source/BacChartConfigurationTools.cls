@@ -58,14 +58,19 @@ Public Sub DeleteFormProperty(ByVal FormName As String, ByVal PropertyName As St
     
 End Sub
 
-Public Function GetFormProperty(ByVal FormName As String, ByVal PropertyName As String) As BAC_Properties
+Public Function GetFormProperty(ByVal FormName As String, ByVal PropertyName As String, _
+                  Optional UseCodeProject As Boolean = False) As BAC_Properties
 
     Dim ao As AccessObject
     Dim Prop As AccessObjectProperty
     Dim PropJson As String
     Dim ChartProperties As BAC_Properties
     
-    Set ao = CurrentProject.AllForms(FormName)
+    If UseCodeProject Then ' special: eg start demo form from add-in
+        Set ao = CodeProject.AllForms(FormName)
+    Else                   ' default ... use CurrentProject
+        Set ao = CurrentProject.AllForms(FormName)
+    End If
     
     For Each Prop In ao.Properties
         If Prop.Name = PropertyName Then
@@ -116,12 +121,19 @@ Public Sub SaveToFormProperty(ByVal FormName As String, ByVal PropertyName As St
 
 End Sub
 
-Public Function GetFromTable(ByVal PropName As String) As BAC_Properties
+Public Function GetFromTable(ByVal PropName As String, Optional DatabaseToUse As DAO.Database = Nothing) As BAC_Properties
 
     Dim JsonString As String
     Dim Properties As BAC_Properties
+    Dim db As DAO.Database
     
-    With InstanceDb.OpenRecordset("select " & m_JsonDataField & " from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbOpenSnapshot)
+    If DatabaseToUse Is Nothing Then
+        Set db = InstanceDb
+    Else
+        Set db = DatabaseToUse
+    End If
+    
+    With db.OpenRecordset("select " & m_JsonDataField & " from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbOpenSnapshot)
         If Not .EOF Then
             JsonString = Nz(.Fields(0).Value, vbNullString)
         End If
@@ -140,15 +152,24 @@ Public Function GetFromTable(ByVal PropName As String) As BAC_Properties
 
 End Function
 
-Public Sub SaveToTable(ByVal PropName As String, ByVal Properties As BAC_Properties)
+Public Sub SaveToTable(ByVal PropName As String, ByVal Properties As BAC_Properties, Optional DatabaseToUse As DAO.Database = Nothing)
 
     Dim JsonString As String
+    Dim db As DAO.Database
+    
+    If DatabaseToUse Is Nothing Then
+        Set db = InstanceDb
+    Else
+        Set db = DatabaseToUse
+    End If
     
     With New BAC_JsonConverter
         JsonString = .Properties2Json(Properties)
     End With
     
-    With InstanceDb.OpenRecordset("select " & m_PropNameDataField & ", " & m_JsonDataField & " from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbOpenDynaset)
+    PropName = Replace(PropName, "'", "''")
+    
+    With db.OpenRecordset("select " & m_PropNameDataField & ", " & m_JsonDataField & " from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbOpenDynaset)
         If .EOF Then
             .AddNew
             .Fields("PropName").Value = PropName
@@ -159,6 +180,21 @@ Public Sub SaveToTable(ByVal PropName As String, ByVal Properties As BAC_Propert
         .Update
         .Close
     End With
+    
+End Sub
+
+Public Sub DeleteTableProperty(ByVal PropName As String, Optional DatabaseToUse As DAO.Database = Nothing)
+    
+    Dim db As DAO.Database
+    
+    If DatabaseToUse Is Nothing Then
+        Set db = InstanceDb
+    Else
+        Set db = DatabaseToUse
+    End If
+    
+    PropName = Replace(PropName, "'", "''")
+    db.Execute "delete from " & m_TableName & " where " & m_PropNameDataField & " = '" & PropName & "'", dbFailOnError
     
 End Sub
 

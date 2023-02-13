@@ -70,3 +70,10 @@ Public Function UncPath( _
    End If
    
 End Function
+
+Public Property Get BacVersion() As String
+    With CodeDb.OpenRecordset("select max(V_Number) as M from tbl_VersionHistory")
+        BacVersion = .Fields(0).Value
+        .Close
+    End With
+End Property

@@ -23,9 +23,26 @@ Private m_Data As BAC_Data
 
 Private m_Properties As BAC_Properties
 
+Private m_InstanceDb As DAO.Database
+
 Private Sub Class_Initialize()
    InitProperties
 End Sub
+
+Private Property Get InstanceDb() As DAO.Database
+
+    If m_InstanceDb Is Nothing Then
+        Set m_InstanceDb = CurrentDb
+    End If
+    
+    Set InstanceDb = m_InstanceDb
+
+End Property
+
+Public Sub InitDatabase(ByVal DatabaseToUse As DAO.Database)
+    Set m_InstanceDb = DatabaseToUse
+End Sub
+
 
 Private Sub InitProperties()
    Set m_Properties = New BAC_Properties
@@ -168,7 +185,7 @@ On Error GoTo Handle_Error
     Dim rst As Object           'ADO/DAO Recordset
     Dim dst As New BAC_Data
     
-    Set db = CurrentDb()
+    Set db = InstanceDb
     
     'Detect data source
     Select Case DataSourceType
