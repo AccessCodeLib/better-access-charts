@@ -80,7 +80,8 @@ End Function
 
 Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, _
                                      ByVal FormName As String, ByVal ChartControlName As String, _
-                            Optional ByVal ChartProperties As BAC_Properties = Nothing) As Form
+                            Optional ByVal ChartProperties As BAC_Properties = Nothing, _
+                            Optional ByVal UseCodeDb As Boolean = False) As Form
 
     Dim ConfigFrm As Form
     Set ConfigFrm = New Form_frm_Configuration
@@ -94,7 +95,7 @@ Public Function NewConfigurationForm(ByRef ReturnProperties As BAC_Properties, _
         ReturnProperties.NewProperty("ChartControlName").Value = ChartControlName
     End If
     
-    ConfigFrm.Init ReturnProperties
+    ConfigFrm.Init ReturnProperties, UseCodeDb
 
     If Not (ChartProperties Is Nothing) Then
         ConfigFrm.LoadConfig ChartProperties
