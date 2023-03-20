@@ -8,9 +8,9 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 '###########################################################################################
-'# Copyright (c) 2020 - 2022 Thomas Moeller, supported by K.D.Gundermann                   #
+'# Copyright (c) 2020 - 2023 Thomas Moeller, supported by K.D.Gundermann                   #
 '# MIT License  => https://github.com/team-moeller/better-access-charts/blob/main/LICENSE  #
-'# Version 2.30.02  published: 30.12.2022                                                  #
+'# Version 3.00.09  published: 19.03.2023                                                  #
 '###########################################################################################
 
 Option Compare Database
@@ -33,13 +33,13 @@ End Sub
     
 '### Initializer
 
-Public Function Chart(Optional ByVal TheControl As WebBrowserControl, _
-                      Optional ByVal ChartType As chChartType = chChartType.Bar, _
-                      Optional ByVal DataSourceType As chDataSourceType = chDataSourceType.dstDemo, _
-                      Optional ByVal DataSource As Variant, _
-                      Optional ByVal DataFieldNames As Variant, _
-                      Optional ByVal LabelFieldName As String) As BAC_Chart
-  
+Public Function Chart(Optional ByVal TheControl As Object, _
+                Optional ByVal ChartType As chChartType = chChartType.Bar, _
+                Optional ByVal DataSourceType As chDataSourceType = chDataSourceType.dstDemo, _
+                Optional ByVal DataSource As Variant, _
+                Optional ByVal DataFieldNames As Variant, _
+                Optional ByVal LabelFieldName As String) As BAC_Chart
+' TheControl = WebBrowserControl or Edge
     Set Chart = New BAC_Chart
     
     If TheControl Is Nothing Then
