@@ -411,7 +411,7 @@ Public Sub CreateChart()
     
     Select Case Me.DisplayIn
         Case chDisplayIn.chWebBrowserControl
-            If TypeName(New_Control) = "Edge" then
+            If TypeName(Me.WebBrowserControl) = "Edge" Then
                 If Me.WebBrowserControl.LocationURL = vbNullString Then
                     CreateEmptyHtmlFile
                     Me.WebBrowserControl.Navigate "https://msaccess/" & getHTMLFileName(, True)

@@ -554,9 +554,18 @@ End Sub
 
 Private Sub CheckWebCtlControlSource(ByVal WebCtl As Control)
    With WebCtl
-      If .ControlSource <> "=""about:blank""" Then
-         .ControlSource = "=""about:blank"""
-      End If
+      Select Case TypeName(WebCtl)
+         Case "WebBrowserControl"
+            If .ControlSource <> "=""about:blank""" Then
+               .ControlSource = "=""about:blank"""
+            End If
+         Case "Edge"
+            If .ControlSource = "=""about:blank""" Then
+               .ControlSource = vbNullString
+            End If
+         Case Else
+            '
+      End Select
    End With
 End Sub
 
