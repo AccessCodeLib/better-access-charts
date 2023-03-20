@@ -8,9 +8,9 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = True
 '###########################################################################################
-'# Copyright (c) 2020 - 2022 Thomas Moeller, supported by K.D.Gundermann                   #
+'# Copyright (c) 2020 - 2023 Thomas Moeller, supported by K.D.Gundermann                   #
 '# MIT License  => https://github.com/team-moeller/better-access-charts/blob/main/LICENSE  #
-'# Version 2.30.02  published: 30.12.2022                                                  #
+'# Version 3.00.09  published: 19.03.2023                                                  #
 '###########################################################################################
 
 Option Compare Database
@@ -109,7 +109,7 @@ End Enum
 '### Members
 Private m_Properties As BAC_Properties
 
-Private m_WebBrowserControl As Access.WebBrowserControl
+Private m_WebBrowserControl As Access.Edge
 Private m_WebBrowserActiveX As SHDocVw.WebBrowser
 Private m_ImageControl As Access.Image
 
@@ -146,7 +146,7 @@ Public Property Get Properties() As BAC_Properties
 End Property
 
 Public Property Set Control(ByVal New_Control As Object)
-    If TypeName(New_Control) = "WebBrowserControl" Then
+    If TypeName(New_Control) = "Edge" Then
         Set Me.WebBrowserControl = New_Control
     ElseIf TypeName(New_Control) = "Image" Then
         Set Me.ImageControl = New_Control
@@ -168,11 +168,11 @@ Public Property Get Control() As Object
     End If
 End Property
 
-Public Property Set WebBrowserControl(ByVal New_Control As Access.WebBrowserControl)
+Public Property Set WebBrowserControl(ByVal New_Control As Access.Edge)
     Set m_WebBrowserControl = New_Control
     DisplayIn = chWebBrowserControl
 End Property
-Public Property Get WebBrowserControl() As WebBrowserControl
+Public Property Get WebBrowserControl() As Edge
     Set WebBrowserControl = m_WebBrowserControl
 End Property
 
@@ -410,17 +410,31 @@ Public Sub CreateChart()
     
     Select Case Me.DisplayIn
         Case chDisplayIn.chWebBrowserControl
-            CreateEmptyHtmlFile
-            Me.WebBrowserControl.Object.Navigate getHTMLFileName(, True)
-            Do While Me.WebBrowserControl.Object.Busy Or Me.WebBrowserControl.Object.ReadyState <> 4
-                DoEvents
-            Loop
-            With Me.WebBrowserControl.Object.Document
-                .Open
+''            Me.WebBrowserControl.Navigate getHTMLFileName(, True)
+''            Do While Me.WebBrowserControl.Object.Busy Or Me.WebBrowserControl.Object.ReadyState <> 4
+''                DoEvents
+''            Loop
+            If Me.WebBrowserControl.LocationURL = vbNullString Then
+                CreateEmptyHtmlFile
+                Me.WebBrowserControl.Navigate "https://msaccess/" & getHTMLFileName(, True)
+                Do While Me.WebBrowserControl.ReadyState <> 4
+                    DoEvents
+                Loop
+            End If
+''            With Me.WebBrowserControl.Object.Document
+''                .Open
                 strHtml = BAC.Generator(Me, Me.DataSource.getData(Me.ChartType)).GenerateHTML
-                .Write strHtml
-                .Close
-            End With
+                strHtml = Replace(strHtml, vbCrLf, "")
+''                .Write strHtml
+''                .Close
+''            End With
+            Dim js As String
+            js = js & "document.open();"
+            js = js & "document.write(""" & strHtml & """);"
+            js = js & "document.close();"
+            
+            Me.WebBrowserControl.ExecuteJavascript js
+            
             If Me.SaveHtmlFileForDebugging = True Then
                 Call saveHtmlFile(CurrentProject.Path & "\", strHtml)
             End If
@@ -470,8 +484,12 @@ Private Sub CreateEmptyHtmlFile()
         .AddLine "</body>"
         .AddLine "</html>"
     End With
+
+''    Dim strHtml As String
+''    strHtml = "<html><head></head><body></body></html>"
     
     Call saveHtmlFile(vbNullString, strHtml.ToString, True)
+''    Call saveHtmlFile(vbNullString, strHtml, True)
     
 End Sub
 
