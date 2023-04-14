@@ -10,7 +10,7 @@ Attribute VB_Exposed = True
 '###########################################################################################
 '# Copyright (c) 2020 - 2022 Thomas Moeller, supported by K.D.Gundermann                   #
 '# MIT License  => https://github.com/team-moeller/better-access-charts/blob/main/LICENSE  #
-'# Version 2.30.02  published: 30.12.2022                                                  #
+'# Version 3.17.07  published: 10.04.2023                                                  #
 '###########################################################################################
 
 Option Compare Database
@@ -114,7 +114,6 @@ Private m_WebBrowserActiveX As SHDocVw.WebBrowser
 Private m_ImageControl As Access.Image
 
 Private m_Animation   As BAC_Animation
-Private m_ColorSchema As BAC_ColorSchema
 Private m_DataSource  As BAC_DataSource
 Private m_DataLabels  As BAC_DataLabels
 Private m_Defaults    As BAC_Defaults
@@ -126,7 +125,7 @@ Private m_Title       As BAC_Title
     
 '### Initializer
 
-Public Sub Init(Optional ByVal TheControl As Object, _
+Public Sub Init(Optional ByRef TheControl As Object, _
                 Optional ByVal ChartType As chChartType = chChartType.Bar, _
                 Optional ByVal DataSourceType As chDataSourceType, _
                 Optional ByVal DataSource As Variant, _
@@ -145,7 +144,7 @@ Public Property Get Properties() As BAC_Properties
    Set Properties = m_Properties
 End Property
 
-Public Property Set Control(ByVal New_Control As Object)
+Public Property Set Control(ByRef New_Control As Object)
     If TypeName(New_Control) = "WebBrowserControl" Or TypeName(New_Control) = "Edge" Then
         Set Me.WebBrowserControl = New_Control
     ElseIf TypeName(New_Control) = "Image" Then
@@ -168,15 +167,15 @@ Public Property Get Control() As Object
     End If
 End Property
 
-Public Property Set WebBrowserControl(ByVal New_Control As Object) ' Access.WebBrowserControl or Access.Edge
+Public Property Set WebBrowserControl(ByRef New_Control As Access.Edge)
     Set m_WebBrowserControl = New_Control
     DisplayIn = chWebBrowserControl
 End Property
-Public Property Get WebBrowserControl() As Object ' Access.WebBrowserControl or Access.Edge
+Public Property Get WebBrowserControl() As Access.Edge
     Set WebBrowserControl = m_WebBrowserControl
 End Property
 
-Public Property Set WebBrowserActiveX(ByVal New_Control As SHDocVw.WebBrowser)
+Public Property Set WebBrowserActiveX(ByRef New_Control As SHDocVw.WebBrowser)
     Set m_WebBrowserActiveX = New_Control
     DisplayIn = chWebBrowserActiveX
 End Property
@@ -184,7 +183,7 @@ Public Property Get WebBrowserActiveX() As SHDocVw.WebBrowser
     Set WebBrowserActiveX = m_WebBrowserActiveX
 End Property
 
-Public Property Set ImageControl(ByVal New_Control As Access.Image)
+Public Property Set ImageControl(ByRef New_Control As Access.Image)
     Set m_ImageControl = New_Control
     DisplayIn = chImageControl
 End Property
@@ -282,10 +281,6 @@ Public Property Get Animation() As BAC_Animation
     Set Animation = m_Animation
 End Property
 
-Public Property Get ColorSchema() As BAC_ColorSchema
-    Set ColorSchema = m_ColorSchema
-End Property
-
 Public Property Get DataSource() As BAC_DataSource
     Set DataSource = m_DataSource
 End Property
@@ -332,9 +327,6 @@ Private Sub Class_Initialize()
     
     'Create Sub Classes
     Set m_Animation = New BAC_Animation
-    Set m_Properties.NewProperty("Animation").Properties = m_Animation.Properties
-    
-    Set m_ColorSchema = New BAC_ColorSchema
     Set m_Properties.NewProperty("ColorSchema").Properties = m_ColorSchema.Properties
     
     Set m_DataSource = New BAC_DataSource
@@ -378,9 +370,6 @@ Private Sub Class_Initialize()
     'Axis
     YAxis.Show = True
     XAxis.Show = True
-        
-    'ColorSchema
-    ColorSchema.Name = "brewer.Paired12"
 
 End Sub
 
@@ -411,38 +400,22 @@ Public Sub CreateChart()
     
     Select Case Me.DisplayIn
         Case chDisplayIn.chWebBrowserControl
-            If TypeName(Me.WebBrowserControl) = "Edge" Then
-                If Me.WebBrowserControl.LocationURL = vbNullString Then
-                    CreateEmptyHtmlFile
-                    Me.WebBrowserControl.Navigate "https://msaccess/" & getHTMLFileName(, True)
-                    Do While Me.WebBrowserControl.ReadyState <> 4
-                        DoEvents
-                    Loop
-                End If
-                strHtml = BAC.Generator(Me, Me.DataSource.getData(Me.ChartType)).GenerateHTML
-                strHtml = Replace(strHtml, vbCrLf, "")
-            
-                js = js & "document.open();"
-                js = js & "document.write(""" & strHtml & """);"
-                js = js & "document.close();"
-            
-                Me.WebBrowserControl.ExecuteJavascript js
-            Else 'WebBrowserControl
+''            If Me.WebBrowserControl.LocationURL = vbNullString Then
                 CreateEmptyHtmlFile
                 Me.WebBrowserControl.Object.Navigate getHTMLFileName(, True)
                 Do While Me.WebBrowserControl.Object.Busy Or Me.WebBrowserControl.Object.ReadyState <> 4
                     DoEvents
                 Loop
-                With Me.WebBrowserControl.Object.Document
-                    .Open
-                     strHtml = BAC.Generator(Me, Me.DataSource.getData(Me.ChartType)).GenerateHTML
-                     .Write strHtml
-                     .Close
-                End With
-            End If
+''            End If
+            strHtml = BAC.Generator(Me, Me.DataSource.getData(Me.ChartType)).GenerateHTML
             If Me.SaveHtmlFileForDebugging = True Then
                 Call saveHtmlFile(CurrentProject.Path & "\", strHtml)
             End If
+            strHtml = Replace(strHtml, vbCrLf, "")
+            js = js & "document.open();"
+            js = js & "document.write(""" & strHtml & """);"
+            js = js & "document.close();"
+            Me.WebBrowserControl.ExecuteJavascript js
         Case chDisplayIn.chWebBrowserActiveX
             CreateEmptyHtmlFile
             Me.WebBrowserActiveX.Navigate getHTMLFileName(, True)
@@ -479,11 +452,8 @@ Private Sub CreateEmptyHtmlFile()
     Dim strHtml As New BAC_StringBuilder
     
     With strHtml
-        .AddLine "<!DOCTYPE html>"
-        .AddLine "<!-- saved from url=(0014)about:internet -->"
         .AddLine "<html>"
         .AddLine "<head>"
-        .AddLine "    <meta http-equiv='X-UA-Compatible' content='IE=Edge'>"
         .AddLine "</head>"
         .AddLine "<body>"
         .AddLine "</body>"
