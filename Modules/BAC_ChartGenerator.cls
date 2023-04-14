@@ -10,7 +10,7 @@ Attribute VB_Exposed = True
 '###########################################################################################
 '# Copyright (c) 2020 - 2023 Thomas Moeller, supported by K.D.Gundermann                   #
 '# MIT License  => https://github.com/team-moeller/better-access-charts/blob/main/LICENSE  #
-'# Version 3.00.09  published: 19.03.2023                                                  #
+'# Version 3.17.07  published: 10.04.2023                                                  #
 '###########################################################################################
 
 Option Compare Database
@@ -69,14 +69,12 @@ Private Function getHeader() As String
     
     With strText
         .AddLine "<!DOCTYPE html>"
-        .AddLine "<!-- saved from url=(0014)about:internet -->"
         .AddLine "<html>"
         .AddLine "<head>"
         .AddLine "    <title>Chart</title>"
         .AddLine "    <meta charset='utf-8'>"
-        .AddLine "    <meta http-equiv='X-UA-Compatible' content='IE=Edge'>"
         .AddLine "    <script src=" & BAC.Scripts.ChartJS.getLocation & "></script>"
-        .AddLine "    <script src=" & BAC.Scripts.Plugin_ColorSchemes.getLocation & "></script>"
+        .AddLine "    <script src=" & BAC.Scripts.Plugin_AutoColors.getDataLabelLocation & "></script>"
         If Options.DataLabels.Show = True Then
             .AddLine "    <script src=" & BAC.Scripts.Plugin_DataLabels.getDataLabelLocation & "></script>"
         End If
@@ -95,13 +93,21 @@ Private Function getHeader() As String
         .AddLine "</div>"
         
         If Options.ShowDownloadLink = True Then
-            .AddLine "<a href='#' id='download' onclick='download()'>Download</a>"
+            .AddLine "<a href='#' id='download' onclick='daunload()'>Download</a>"
         End If
         
         .AddLine "<script>"
+        
+        .AddLine "    const autocolors = window['chartjs-plugin-autocolors'];"
+        .AddLine "    Chart.register(autocolors);"
+        
+        If Options.DataLabels.Show = True Then
+            .AddLine "    Chart.register(ChartDataLabels);"
+        End If
+        
         .Add getDefaultFont
         If Options.DisplayIn = chDisplayIn.chImageControl Then
-            .AddLine "    Chart.defaults.global.animation = false;"
+            .AddLine "    Chart.defaults.animation = false;"
         End If
         .Add Options.Animation.getAnimation
         .AddLine "    var ctx = document.getElementById('myChart').getContext('2d');"
@@ -138,20 +144,20 @@ Private Function getDefaultFont() As String
     With strText
         Set Font = Options.Default.Font
         If Len(Font.Color) > 0 Then
-            .AddLine "    Chart.defaults.global.defaultFontColor = '" & Font.Color & "';"
+            .AddLine "    Chart.defaults.color = '" & Font.Color & "';"
         End If
         If Len(Font.Family) > 0 Then
-            .AddLine "    Chart.defaults.global.defaultFontFamily = '" & Font.Family & "';"
+            .AddLine "    Chart.defaults.font.family = '" & Font.Family & "';"
         End If
         If Font.Size > 0 Then
-            .AddLine "    Chart.defaults.global.defaultFontSize = " & Font.Size & ";"
+            .AddLine "    Chart.defaults.font.size = " & Font.Size & ";"
         End If
         If Font.IsBold = True And Font.IsItalic = True Then
-            .AddLine "    Chart.defaults.global.defaultFontStyle = 'bold italic'" & ";"
+            .AddLine "    Chart.defaults.font.style = 'bold italic'" & ";"
         ElseIf Font.IsBold = True Then
-            .AddLine "    Chart.defaults.global.defaultFontStyle = 'bold'" & ";"
+            .AddLine "    Chart.defaults.font.style = 'bold'" & ";"
         ElseIf Font.IsItalic = True Then
-            .AddLine "    Chart.defaults.global.defaultFontStyle = 'italic'" & ";"
+            .AddLine "    Chart.defaults.font.style = 'italic'" & ";"
         Else
             'Do nothing
         End If
@@ -215,8 +221,8 @@ Private Function getChartData() As String
             
             Select Case Options.ChartType
                 Case chChartType.Line, chChartType.Radar
-                    If Options.AreaFilled = False Then
-                        .AddLine "                fill: false ,"
+                    If Options.AreaFilled = True Then
+                        .AddLine "                fill: true ,"
                     End If
                 Case Else
                     'Do Nothing
@@ -224,9 +230,10 @@ Private Function getChartData() As String
                     
             .AddLine "                data: [" & Data.Data(i) & "],"
             
-            If IsSingleBarChart Then
-                .AddLine "                backgroundColor: Chart['colorschemes']." & Options.ColorSchema.Name & ","
-            End If
+'' ### Reminder for new coloring solution
+''            If IsSingleBarChart Then
+''                .AddLine "                backgroundColor: Chart['colorschemes']." & Options.ColorSchema.Name & ","
+''            End If
             
             .AddLine "                borderWidth: 1},"
             
@@ -250,8 +257,6 @@ Private Function getChartOptions() As String
         If Options.AspectRatio <> 2# Then
             .AddLine "            aspectRatio: " & str(Options.AspectRatio) & ","
         End If
-        .Add Options.Title.getTitle
-        .Add Options.Legend.getLegend
         .Add getScales
         .Add getPlugins
         .CutTrailingComma
@@ -271,10 +276,10 @@ Private Function getFooter() As String
         .AddLine "    });"  ' closing: var myChart = new Chart(ctx, {"
         
         If Options.ShowDownloadLink = True Then
-            .AddLine "    function download() {"
+            .AddLine "    function daunload() {"
             .AddLine "        var myChart = document.getElementById('myChart');"
-            .AddLine "        var blob = myChart.msToBlob()"
-            .AddLine "        window.navigator.msSaveBlob(blob, 'Better-Access-Charts.png');"
+            .AddLine "        var image = myChart.toDataURL('image/png').replace('image/png', 'image/octet-stream');"
+            .AddLine "        window.location.href=image;"
             .AddLine "    }"
         End If
         .AddLine "</script>"
@@ -324,7 +329,8 @@ Private Function getPlugins() As String
     
     With strText
         .AddLine "            plugins: {"
-        .Add Options.ColorSchema.getColorSchema
+        .Add Options.Title.getTitle
+        .Add Options.Legend.getLegend
         .Add Options.DataLabels.getDataLabel
         .CutTrailingComma
         .AddLine "                },"
